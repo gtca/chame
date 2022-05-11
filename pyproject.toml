@@ -73,3 +73,4 @@ skip = []
 
 [tool.jupytext]
 formats = "ipynb,md"
+

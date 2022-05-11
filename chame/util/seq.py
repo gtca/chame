@@ -10,7 +10,7 @@ def sequence_to_onehot(
 ) -> np.ndarray:
     """Maps the sequence into a one-hot encoded matrix.
 
-    Follows the interface inAlphaFold.
+    Follows the interface in AlphaFold.
 
     Args:
       sequence: A sequence such as a sequence of nucleotides
@@ -27,6 +27,7 @@ def sequence_to_onehot(
     Raises:
       ValueError: If the mapping doesn't contain values from 0 to
         num_unique_items - 1 without gaps.
+
     """
     num_entries = max(mapping.values()) + 1
 

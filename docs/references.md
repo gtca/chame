@@ -4,3 +4,10 @@
 :cited:
 ```
 
+
+```{autosummary}
+:toctree: generated
+:recursive:
+
+*
+```
