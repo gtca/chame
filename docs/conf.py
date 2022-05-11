@@ -49,7 +49,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinxcontrib.bibtex",
     "sphinx_autodoc_typehints",
-    "scanpydoc.definition_list_typed_field",
     "nbsphinx",
     "sphinx.ext.mathjax",
     *[p.stem for p in (HERE / "extensions").glob("*.py")],
