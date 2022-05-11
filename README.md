@@ -3,7 +3,7 @@
 `chame` is a Python module to work with genomic ranges and chromatin accessibility.
 Part of [`scverse`](https://scverse.org/).
 
-[Documentation](https://gtca.github.io/chame) | [Tutorials](https://chame-tutorials.readthedocs.io/)
+[Documentation](https://gtca.github.io/chame) | [Examples](https://gtca.github.io/chame/examples/)
 
 # Install `chame`
 
