@@ -13,10 +13,12 @@ def sequence_to_onehot(
     Follows the interface in AlphaFold.
 
     Args:
-      sequence: A sequence such as a sequence of nucleotides
-      mapping (optional): A dictionary mapping possible sequence items (nucleotides) to integers.
-        { ACGT -> 0123 } by default.
-      map_unknown_to_x (optional): Items not in the mapping will be mapped to "X".
+      sequence:
+        A sequence such as a sequence of nucleotides
+      mapping (optional):
+        A dictionary mapping possible sequence items (nucleotides) to integers, { ACGT -> 0123 } by default.
+      map_unknown_to_x (optional):
+        Items not in the mapping will be mapped to "X".
         If there is no "X" in the mapping, an error will be thrown.
         False by default.
 
@@ -25,7 +27,8 @@ def sequence_to_onehot(
       the sequence.
 
     Raises:
-      ValueError: If the mapping doesn't contain values from 0 to
+      ValueError:
+        If the mapping doesn't contain values from 0 to
         num_unique_items - 1 without gaps.
 
     """
