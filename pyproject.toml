@@ -41,7 +41,8 @@ doc = [
     "sphinx-book-theme",
     "readthedocs-sphinx-search",
     "nbsphinx",
-    "sphinx_automodapi"
+    "sphinx_automodapi",
+    "sphinxcontrib-bibtex",
 ]
 test = [
     "pytest",

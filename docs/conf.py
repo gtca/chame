@@ -94,5 +94,4 @@ html_static_path = ["_static"]
 html_logo = "img/chame_logo.svg"
 html_theme_options = {
     "logo_only": True,
-    "display_version": False,
 }
