@@ -16,8 +16,8 @@ sys.path.insert(0, str(HERE / "extensions"))
 
 # -- Project information -----------------------------------------------------
 
-project = 'chame'
-author = 'Danila Bredikhin'
+project = "chame"
+author = "Danila Bredikhin"
 copyright = f"{datetime.now():%Y}, {author}."
 info = metadata("chame")
 version = info["Version"]
@@ -50,7 +50,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "scanpydoc.definition_list_typed_field",
     "nbsphinx",
-    'sphinx.ext.mathjax',
+    "sphinx.ext.mathjax",
     *[p.stem for p in (HERE / "extensions").glob("*.py")],
 ]
 
@@ -69,10 +69,10 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
 }
 
-nbsphinx_execute = 'never'
+nbsphinx_execute = "never"
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -90,7 +90,7 @@ html_theme = "sphinx_book_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 html_logo = "img/chame_logo.svg"
 html_theme_options = {
     "logo_only": True,
