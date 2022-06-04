@@ -15,7 +15,7 @@ import scipy.stats as stats
 from sklearn.neighbors import NearestNeighbors
 from anndata import AnnData
 
-from loguru import logger
+from logging import log
 
 
 def chromvar(
@@ -35,7 +35,7 @@ def chromvar(
     counts = adata.X
 
     if bias is None:
-        logger.info(f"Using counts per peak as bias as none provided.")
+        log.info(f"Using counts per peak as bias as none provided.")
         bias = counts.sum(axis=0)
 
     if background_peaks is None:
@@ -59,10 +59,10 @@ def chromvar(
     )
 
     adata.obsm[dev_key] = dev["deviations"]
-    logger.info(f"Added key '{dev_key}' to adata.obsm.")
+    log.info(f"Added key '{dev_key}' to adata.obsm.")
 
     adata.obsm[z_key] = dev["z"]
-    logger.info(f"Added key '{z_key}' to adata.obsm.")
+    log.info(f"Added key '{z_key}' to adata.obsm.")
 
 
 def _compute_deviations_core(
