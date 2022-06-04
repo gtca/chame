@@ -1,6 +1,36 @@
-from typing import Mapping
+from typing import Mapping, Union
 
 import numpy as np
+
+
+def count_gc(sequence: Union[str, np.ndarray]) -> float:
+    """
+    Counts the frequency of capital G and C letters
+    in a given string or array of strings.
+
+    There is no check that only A, T, G and C
+    are in the string.
+
+    Args:
+      sequence: str or array
+        A sequence or an array of sequences
+
+    Returns:
+      A string if a string was provided. A numpy array
+      in an array was provided.
+    """
+
+    def _count_gc(seq):
+        # Case-insensitive
+        s = seq.upper()
+        g = seq.count("G")
+        c = seq.count("C")
+        return (g + c) * 1.0 / len(s)
+
+    if isinstance(sequence, str):
+        return _count_gc(sequence)
+    else:
+        return np.vectorize(_count_gc)(sequence)
 
 
 def sequence_to_onehot(

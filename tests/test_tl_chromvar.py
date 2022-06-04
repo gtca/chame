@@ -1,5 +1,5 @@
 import numpy as np
-from chame.tl import chromvar
+from chame.tl.chromvar import _compute_expectations_core, _compute_deviations_core
 
 
 def test_compute_deviations():
@@ -11,8 +11,8 @@ def test_compute_deviations():
     # TFs x peaks
     anno_mx = np.array([[1, 1, 0], [1, 1, 1], [1, 0, 1]]).astype(bool).T
     anno_list = [np.where(x) for x in anno_mx]
-    # niter x peaks
-    bg = np.array([[1, 1, 1], [0, 0, 2], [1, 1, 0]]).T
+    # peaks x niter
+    bg = np.array([[1, 1, 1], [0, 0, 2], [1, 1, 0]])
 
     true_deviations = np.array(
         [
@@ -29,8 +29,10 @@ def test_compute_deviations():
         ]
     ).T
 
-    expectation = chromvar._compute_expectations_core(counts)
-    dev = chromvar._compute_deviations_core(counts, anno_mx, bg, expectation)
+    expectation = _compute_expectations_core(counts)
+    dev = _compute_deviations_core(counts, anno_mx, bg, expectation)
+
+    print(dev)
 
     assert np.allclose(dev["deviations"], true_deviations, equal_nan=True)
     assert np.allclose(dev["z"], true_z, equal_nan=True)
