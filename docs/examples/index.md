@@ -4,6 +4,7 @@
 :maxdepth: 2
 
 seq.ipynb
+chromvar.ipynb
 ```
 
 ```{contents}
