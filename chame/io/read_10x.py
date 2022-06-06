@@ -43,7 +43,7 @@ def read_10x_mtx(path: PathLike, atac_only: bool = True, *args, **kwargs) -> Ann
     Returns:
       AnnData object.
     """
-    adata = sc.read_10x_mtx(filename, gex_only=False, *args, **kwargs)
+    adata = sc.read_10x_mtx(path, gex_only=False, *args, **kwargs)
     if atac_only:
         adata = adata[:, list(map(lambda x: x == "Peaks", adata.var["feature_types"]))]
     return adata
