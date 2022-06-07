@@ -1,5 +1,5 @@
-from os import PathLike
-from typing import Optional, Literal
+from os import PathLike, path
+from typing import Optional, Literal, Any, Dict
 from warnings import warn
 
 import numpy as np
@@ -88,3 +88,31 @@ def read_10x_tf_h5(
         )
 
     return adata
+
+
+def _read_10x_summary(
+    filename: PathLike,
+) -> Dict[str, Any]:
+    """Read summary.csv or summary.json
+    in the Cell Ranger (ATAC) output folder.
+
+    Args:
+      filename: str
+        Path to summary.csv or summary.json
+
+    Returns:
+      Dictionary with summary information.
+    """
+    ext = path.splitext(filename)[-1]
+    if ext == ".csv":
+        summary = pd.read_csv(filename).T.to_dict()[0]
+    elif ext == ".json":
+        import json
+
+        with open(filename) as f:
+            summary = json.load(f)
+    else:
+        raise NotImplementedError(
+            f"Reading {ext} file with summary has not been defined"
+        )
+    return summary
