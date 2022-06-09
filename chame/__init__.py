@@ -1,4 +1,5 @@
 from . import pl, pp, tl, util
+from .io.read_10x import read_10x
 
 __all__ = ["io", "pl", "pp", "tl", "util"]
 
