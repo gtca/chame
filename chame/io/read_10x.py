@@ -37,12 +37,17 @@ def read_10x(
     }
     files = os.listdir(path)
 
+    if len(prefix := os.path.commonprefix(files)) > 0:
+        files = [f.removeprefix(prefix) for f in files]
+
     # Counts
     if raw:
         raise NotImplementedError
     else:
         if (counts_file := "filtered_peak_bc_matrix.h5") in files:
-            adata = read_10x_h5(os.path.join(path, counts_file), *args, **kwargs)
+            adata = read_10x_h5(
+                os.path.join(path, prefix + counts_file), *args, **kwargs
+            )
         else:
             # TODO: read_10x_mtx
             raise NotImplementedError
@@ -50,12 +55,12 @@ def read_10x(
     # Summary
     summary_ext = summary.strip(".").lower()
     if (summary_file := f"summary.{summary_ext}") in files:
-        summary = _read_10x_summary(os.path.jon(path, summary_file))
+        summary = _read_10x_summary(os.path.join(path, prefix + summary_file))
         adata.uns["summary"] = summary
 
     # TFs
     if (tf_file := "filtered_tf_bc_matrix.h5") in files:
-        adata_tf = read_10x_tf_h5(os.path.join(path, tf_file))
+        adata_tf = read_10x_tf_h5(os.path.join(path, prefix + tf_file))
         adata.obsm["tf"] = pd.DataFrame.sparse.from_spmatrix(
             adata_tf.X,
             index=adata_tf.obs_names.values,
@@ -89,7 +94,9 @@ def read_10x_h5(filename: PathLike, atac_only: bool = True, *args, **kwargs) -> 
     """
     adata = sc.read_10x_h5(filename, gex_only=False, *args, **kwargs)
     if atac_only:
-        adata = adata[:, list(map(lambda x: x == "Peaks", adata.var["feature_types"]))]
+        adata = adata[
+            :, list(map(lambda x: x == "Peaks", adata.var["feature_types"]))
+        ].copy()
     return adata
 
 
