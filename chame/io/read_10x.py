@@ -37,8 +37,28 @@ def read_10x(
     }
     files = os.listdir(path)
 
-    if len(prefix := os.path.commonprefix(files)) > 0:
-        files = [f.removeprefix(prefix) for f in files]
+    # All output files can have the same dataset-specific prefix
+    prefix = ""
+    if len(os.path.commonprefix(files)) > 0:
+        # Prefix should be defined so that filtered/raw counts
+        # are identifiable when present
+        is_matrix_file = [
+            os.path.splitext(f)[0].endswith("_peak_bc_matrix") for f in files
+        ]
+        matrix_files = [files[i] for i in np.where(is_matrix_file)[0]]
+        if len(matrix_files) > 0:
+            mf = os.path.splitext(matrix_files[0])[0]
+            if mf.endswith(filtered_suffix := "filtered_peak_bc_matrix"):
+                prefix = mf[: (len(mf) - len(filtered_suffix))]
+            elif mf.endswith(raw_suffix := "raw_peak_bc_matrix"):
+                prefix = mf[: (len(mf) - len(raw_suffix))]
+            else:
+                raise ValueError("No filtered or raw peak matrix found")
+        else:
+            raise ValueError("No matrix found")
+
+        # TODO: Use f.removeprefix since 3.9
+        files = [f[len(prefix) :] for f in files]
 
     # Counts
     if raw:
@@ -94,9 +114,13 @@ def read_10x_h5(filename: PathLike, atac_only: bool = True, *args, **kwargs) -> 
     """
     adata = sc.read_10x_h5(filename, gex_only=False, *args, **kwargs)
     if atac_only:
-        adata = adata[
-            :, list(map(lambda x: x == "Peaks", adata.var["feature_types"]))
-        ].copy()
+        # No need to copy if only peaks are present
+        if len(ft := adata.var.feature_types.unique()) == 1 and ft[0] == "Peaks":
+            pass
+        else:
+            adata = adata[
+                :, list(map(lambda x: x == "Peaks", adata.var["feature_types"]))
+            ].copy()
     return adata
 
 
@@ -115,7 +139,13 @@ def read_10x_mtx(path: PathLike, atac_only: bool = True, *args, **kwargs) -> Ann
     """
     adata = sc.read_10x_mtx(path, gex_only=False, *args, **kwargs)
     if atac_only:
-        adata = adata[:, list(map(lambda x: x == "Peaks", adata.var["feature_types"]))]
+        # No need to copy if only peaks are present
+        if len(ft := adata.var.feature_types.unique()) == 1 and ft[0] == "Peaks":
+            pass
+        else:
+            adata = adata[
+                :, list(map(lambda x: x == "Peaks", adata.var["feature_types"]))
+            ]
     return adata
 
 
