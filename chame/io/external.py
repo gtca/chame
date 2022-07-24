@@ -296,13 +296,20 @@ def read_arrow(
                                 )
                             )
                         )
+                    # Chromosome, Start, End
+                    tile_var.rename(
+                        {"seqnames": "Chromosome", "start": "Start"},
+                        axis=1,
+                        inplace=True,
+                    )
+                    tile_var["End"] = tile_var.Start + tile_size
                     # chr1:0-500
                     tile_var.index = (
-                        tile_var.seqnames
+                        tile_var.Chromosome
                         + ":"
-                        + tile_var.start.astype(str)
+                        + tile_var.Start.astype(str)
                         + "-"
-                        + (tile_var.start + tile_size).astype(str)
+                        + tile_var.End.astype(str)
                     )
 
         # TODO: Support "Sparse.Binary.Matrix", "Sparse.Integer.Matrix", "Sparse.Double.Matrix", "Sparse.Assays.Matrix"
@@ -342,6 +349,10 @@ def read_arrow(
         matrix is None or matrix in ["gene_integration", "GeneIntegrationMatrix"]
     ):
         print(f"GeneIntegrationMatrix is present but the reader is not implemented yet")
+
+    # TODO: Embeddings
+    # TODO: GroupCoverages
+    # TODO: IterativeLSI, IterativeLSI2
 
     f.close()
 
