@@ -5,6 +5,7 @@
 
 seq.ipynb
 chromvar.ipynb
+archr_io.ipynb
 ```
 
 ```{contents}
