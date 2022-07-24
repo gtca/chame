@@ -289,7 +289,7 @@ def read_arrow(
                                 map(
                                     lambda e: [
                                         int(par["tileSize"])
-                                        for par in params
+                                        for par in tile_params
                                         if par["seqnames"] == e
                                     ][0],
                                     tile_var.seqnames.values,
