@@ -1,7 +1,6 @@
 <img src="./docs/img/chame_logo.svg" data-canonical-src="./docs/img/chame_logo.svg" width="700"/>
 
 `chame` is a Python module to work with genomic ranges and chromatin accessibility.
-Part of [`scverse`](https://scverse.org/).
 
 [Documentation](https://gtca.github.io/chame) | [Examples](https://gtca.github.io/chame/examples/)
 
@@ -20,6 +19,10 @@ pip install git+https://github.com/gtca/chame
 ## Preprocessing and QC
 
 TF-IDF / LSI. TSS enrichment, mono-nucleosome occupancy, etc.
+
+## Methods
+
+Differential accessibility, transcription factor activity, etc.
 
 ## Plotting
 
