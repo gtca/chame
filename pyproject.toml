@@ -36,7 +36,7 @@ dev = [
     # dev version generation
 ]
 doc = [
-    "sphinx",
+    "sphinx==4.2",
     "myst-parser",
     "sphinx-book-theme",
     "readthedocs-sphinx-search",
@@ -44,7 +44,7 @@ doc = [
     "sphinx-automodapi",
     "sphinxcontrib-bibtex",
     "sphinx-autodoc-typehints",
-    "sphinx-markdown-tables==0.0.16",
+    "sphinx-markdown-tables",
 ]
 test = [
     "pytest",
