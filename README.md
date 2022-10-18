@@ -1,6 +1,6 @@
 <img src="./docs/img/chame_logo.svg" data-canonical-src="./docs/img/chame_logo.svg" width="700"/>
 
-`chame` stands for a chromatin accessibility module. It is being developed as a Python library for working with genomic ranges and chromatin accessibility in the [`scverse`](https://scverse.org/) ecosystem.
+`chame` stands for a _chromatin analysis module_. It is being developed as a Python library for working with genomic ranges and chromatin accessibility in the [`scverse`](https://scverse.org/) ecosystem.
 
 [Documentation](https://gtca.github.io/chame) | [Examples](https://gtca.github.io/chame/examples/)
 
@@ -19,6 +19,10 @@ pip install git+https://github.com/gtca/chame
 ## Preprocessing and QC
 
 TF-IDF / LSI. TSS enrichment, mono-nucleosome occupancy, etc.
+
+## Methods
+
+Differential accessibility, transcription factor activity, etc.
 
 ## Plotting
 
