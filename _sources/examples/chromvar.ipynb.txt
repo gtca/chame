@@ -1,0 +1,194 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# chromVAR"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "jp-MarkdownHeadingCollapsed": true,
+    "tags": []
+   },
+   "source": [
+    "`chromVAR` is a method for computing differential motif accessibility. Its original implementation is [available in Bioconductor](https://bioconductor.org/packages/chromVAR), and it has been described in [Schep et al., 2017](https://www.nature.com/articles/nmeth.4401)."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Prepare a demo object"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%load_ext autoreload\n",
+    "%autoreload 2"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "from anndata import AnnData\n",
+    "import chame as ch"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from chame.tl.chromvar import _get_background_peaks, _compute_expectations_core, _compute_deviations_core"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "np.random.seed(1)\n",
+    "x = np.random.binomial(5, 0.2, size=(100,10))  # cell x peaks\n",
+    "\n",
+    "adata = AnnData(x)\n",
+    "adata.obs_names = [f\"cell{i+1}\" for i in range(adata.n_obs)]\n",
+    "adata.var_names = [f\"peak{j+1}\" for j in range(adata.n_vars)]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Simulate sequences\n",
+    "adata.var[\"length\"] = np.random.choice(np.arange(10, 100), size=adata.n_vars)\n",
+    "adata.var[\"sequence\"] = [''.join(np.random.choice([\"A\", \"C\", \"G\", \"T\"], size=i)) for i in adata.var.length]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Compute some peak statistics\n",
+    "adata.var[\"gc\"] = ch.util.seq.count_gc(adata.var[\"sequence\"])\n",
+    "adata.var[\"n_fragments\"] = adata.X.sum(axis=0)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "AnnData object with n_obs × n_vars = 100 × 10\n",
+       "    var: 'length', 'sequence', 'gc', 'n_fragments'"
+      ]
+     },
+     "execution_count": 7,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "adata"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Simulate motif scanning results\n",
+    "n_motifs = 5\n",
+    "motifs_in_peaks = np.random.binomial(1, .3, size=(n_motifs, adata.n_vars))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Run chromVAR"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/usr/local/opt/python@3.8/Frameworks/Python.framework/Versions/3.8/lib/python3.8/site-packages/chame/tl/chromvar.py:147: RuntimeWarning: invalid value encountered in true_divide\n",
+      "  z[fail_filter] = np.nan\n",
+      "2022-06-04 14:55:29.565 | INFO     | chame.tl.chromvar:chromvar:62 - Added key deviations to adata.obsm.\n",
+      "2022-06-04 14:55:29.566 | INFO     | chame.tl.chromvar:chromvar:65 - Added key z to adata.obsm.\n"
+     ]
+    }
+   ],
+   "source": [
+    "ch.tl.chromvar(adata, motifs_in_peaks, bias=\"gc\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "AxisArrays with keys: deviations, z"
+      ]
+     },
+     "execution_count": 26,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "adata.obsm"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.13"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}

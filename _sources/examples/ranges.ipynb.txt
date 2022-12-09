@@ -1,0 +1,772 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "d09f5859-55db-4cb0-9d86-b0909bacab00",
+   "metadata": {},
+   "source": [
+    "# Ranges"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6c12970f-4764-4628-b97d-0bd484a14b49",
+   "metadata": {},
+   "source": [
+    "`chame` brings ranges operations the scverse ecosystem.\n",
+    "\n",
+    "> Ranges functionality is currently an experimental feature with its current implementation based on the [bioframe](https://github.com/open2c/bioframe) library.\n",
+    "\n",
+    "In the context of genomics, _genomic ranges_ are defined using coordinates for a specific chromosome and refer to contiguous DNA regions. Some formal introduction into the topic can be found in [Lawrence et al., 2013](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1003118) as well as in the vignettes of the [GenomicRanges Bioconductor package](https://bioconductor.org/packages/devel/bioc/vignettes/GenomicRanges/inst/doc/GenomicRangesIntroduction.html). Typical operations on genomic ranges are also illustrated [in the bedtools documentation](https://bedtools.readthedocs.io/en/latest/content/tools/intersect.html)."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "82b63cef-bdc2-435e-99a3-59974e66ad78",
+   "metadata": {},
+   "source": [
+    "## Prepare data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "8b8c0d85-b2d2-4842-9c22-8987494199be",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "\n",
+    "import mudata"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4303d432-1be7-4e92-9b26-d7011ecf73aa",
+   "metadata": {},
+   "source": [
+    "Load ATAC modality from a multimodal object:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "144a73a4-1b5e-4e5e-9294-d2f6d07655e6",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from pathlib import Path\n",
+    "data = Path(\"../../../muon-tutorials/data\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "21fc606f-4ebb-4c9a-9214-fb28eec6daef",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "adata = mudata.read(str(data / \"brain3k_processed.h5mu/atac\"))\n",
+    "mdata = mudata.read(str(data / \"brain3k_processed.h5mu\"))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "35f02d72-297c-4255-817a-d07be1162602",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0fb60d47-9643-4567-94fd-4e99f7c72a53",
+   "metadata": {},
+   "source": [
+    "Import `chame`:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "5949cdb3-0f8c-4407-b3c5-bb2f808811a1",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import chame as ch"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "434f3cc4-c90b-49df-9ea4-3c4ba22581b0",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "55275a34-6be8-4a98-b04d-c41bb53aa26d",
+   "metadata": {},
+   "source": [
+    "## Filter by genomic ranges\n",
+    "\n",
+    "Original data size:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "3cd52ab6-63fc-44ed-809d-2e5c6f604f7c",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(2821, 134028)"
+      ]
+     },
+     "execution_count": 5,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "adata.shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0f8513cf-9c31-4a45-b731-f55757607953",
+   "metadata": {},
+   "source": [
+    "Typically AnnData/MuData objects are subsetted (or _sliced_) along the feature dimension using column indices or column names:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "44501280-7b4a-4be1-9255-da9bd1465f33",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "View of AnnData object with n_obs × n_vars = 2821 × 3\n",
+       "    obs: 'n_genes_by_counts', 'total_counts', 'nucleosome_signal', 'tss_score', 'leiden', 'celltype'\n",
+       "    var: 'gene_ids', 'feature_types', 'genome', 'interval', 'n_cells_by_counts', 'mean_counts', 'pct_dropout_by_counts', 'total_counts', 'highly_variable', 'means', 'dispersions', 'dispersions_norm', 'mean', 'std'\n",
+       "    uns: 'atac', 'celltype_colors', 'files', 'hvg', 'leiden', 'leiden_colors', 'neighbors', 'pca', 'rank_genes_groups', 'umap'\n",
+       "    obsm: 'X_pca', 'X_umap'\n",
+       "    varm: 'PCs'\n",
+       "    layers: 'counts', 'lognorm'\n",
+       "    obsp: 'connectivities', 'distances'"
+      ]
+     },
+     "execution_count": 6,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "adata[:,[\"chr1:817893-818459\", \"chr1:818576-819294\", \"chr1:827064-827944\"]]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "02d0a875-907a-4205-a990-bf4304766396",
+   "metadata": {},
+   "source": [
+    "Sometimes features are defined in some coordinate system such as a linear _genome sequence_ — for instance in assays that measure chromatin accessibility, transcription factor occupancy, DNA methylation. In fact, genes also have a property defining their location in the DNA, even though that's something frequently ignored in transcriptomics analysis pipelines.\n",
+    "\n",
+    "**Subsetting AnnData**\n",
+    "\n",
+    "In these cases, it is natural to subset the object based on a set of coordinates. This is the interface that `chame` implements:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "5030746d-b574-4606-bd74-0eecb3ba2d9b",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(2821, 12)"
+      ]
+     },
+     "execution_count": 7,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "ch.pp.filter_var_by_ranges(adata, \"chr1:900000-1000000\").shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "1a6dd392-9ad5-4449-9fe6-5d182507c1e5",
+   "metadata": {},
+   "source": [
+    "This functionality relies on genomic intervals stored in the `.var` table. Intervals can be defined as\n",
+    "\n",
+    "- a single column, e.g. `\"interval\"` (default, split into three columns during subsetting), or\n",
+    "- a set of three columns, e.g. `(\"chrom\", \"start\", \"end\")` (used by default)."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "ca826783-f9ae-437e-b9be-add5399acd2e",
+   "metadata": {},
+   "source": [
+    "Subsetting works on multiple genomic regions as well:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "57d137bb-3eac-40aa-909a-e3d92b62a3e5",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(2821, 145)"
+      ]
+     },
+     "execution_count": 8,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "ch.pp.filter_var_by_ranges(adata, [f\"chr{c}:900000-1000000\" for c in range(22)]).shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "bb847efa-1343-4063-87da-e744b54c9b4c",
+   "metadata": {},
+   "source": [
+    "When a collection of genomic ranges is provided, it is likely to be represented as a NumPy array or a Pandas DataFrame, e.g."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "8d8dd530-4d14-4dbc-845f-3304ac9a39a0",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>chrom</th>\n",
+       "      <th>start</th>\n",
+       "      <th>end</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>chr1</td>\n",
+       "      <td>1000000</td>\n",
+       "      <td>1100000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>chr1</td>\n",
+       "      <td>2000000</td>\n",
+       "      <td>2100000</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>chr2</td>\n",
+       "      <td>3000000</td>\n",
+       "      <td>3100000</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "  chrom    start      end\n",
+       "0  chr1  1000000  1100000\n",
+       "1  chr1  2000000  2100000\n",
+       "2  chr2  3000000  3100000"
+      ]
+     },
+     "execution_count": 9,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "query_ranges = pd.DataFrame({\n",
+    "    \"chrom\": [\"chr1\", \"chr1\", \"chr2\"],\n",
+    "    \"start\": [1_000_000, 2_000_000, 3_000_000],\n",
+    "    \"end\": [1_100_000, 2_100_000, 3_100_000],\n",
+    "})\n",
+    "query_ranges"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "b19ac350-f0aa-4380-b1a1-40313d34dd4b",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(2821, 36)"
+      ]
+     },
+     "execution_count": 10,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "ch.pp.filter_var_by_ranges(adata, ranges=query_ranges).shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "b4d1fd51-b7d9-4728-9774-62ceea627c7b",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "5041b2b9-5bb4-4faa-b208-b20efe8e07fe",
+   "metadata": {},
+   "source": [
+    "**Subsetting MuData**\n",
+    "\n",
+    "Subsetting using genomic ranges works in the same way for MuData objects.\n",
+    "\n",
+    "Original MuData size:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "5702ec65-c883-43bb-87e8-a13a44aa8fce",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(2821, 170629)"
+      ]
+     },
+     "execution_count": 11,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "mdata.shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d0d7b511-e8d7-4f0a-8bb7-d6614155a2e4",
+   "metadata": {},
+   "source": [
+    "Subsetting with a single genomic range:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "52f23cb4-7a23-4d0b-b1d3-14d55fe5734d",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(2821, 23)"
+      ]
+     },
+     "execution_count": 12,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "ch.pp.filter_var_by_ranges(mdata, \"chr1:900000-1000000\").shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d68763ce-e993-46e4-99b1-ee8266e9b9fa",
+   "metadata": {},
+   "source": [
+    "Subsetting with a set of genomic ranges:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "749af86a-1a04-42bb-bea3-de412bcd40d8",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(2821, 207)"
+      ]
+     },
+     "execution_count": 13,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "ch.pp.filter_var_by_ranges(mdata, [f\"chr{c}:900000-1000000\" for c in range(22)]).shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "02894459-f327-4044-8176-2b08ee9e6b4e",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e6f81036-192e-4170-976f-5a53afd360f1",
+   "metadata": {},
+   "source": [
+    "## Overlap threshold"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3f4b7f40-4109-402e-83f1-f52a4e3fa9de",
+   "metadata": {},
+   "source": [
+    "We can also limit the subsetted features to the ones that fully lie in the regions in the query.\n",
+    "\n",
+    "In the current example it means that accessibility peaks should be fully covered by the range provided (`min_var_coverage=1.0`)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "7e21ba55-1aa3-4219-9367-1839d9df8dcd",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>interval</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>chr1:1001576-1002424</th>\n",
+       "      <td>chr1:1001576-1002424</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>chr1:1013015-1013931</th>\n",
+       "      <td>chr1:1013015-1013931</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>chr1:1019259-1020060</th>\n",
+       "      <td>chr1:1019259-1020060</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>chr1:1024711-1025625</th>\n",
+       "      <td>chr1:1024711-1025625</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>chr1:1030994-1031908</th>\n",
+       "      <td>chr1:1030994-1031908</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "                                  interval\n",
+       "chr1:1001576-1002424  chr1:1001576-1002424\n",
+       "chr1:1013015-1013931  chr1:1013015-1013931\n",
+       "chr1:1019259-1020060  chr1:1019259-1020060\n",
+       "chr1:1024711-1025625  chr1:1024711-1025625\n",
+       "chr1:1030994-1031908  chr1:1030994-1031908"
+      ]
+     },
+     "execution_count": 14,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "ch.pp.filter_var_by_ranges(adata, f\"chr1:{1_000_000}-{1_100_000}\", min_var_coverage=1.0).var.loc[:,[\"interval\"]].head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3c5d2260-8eca-4c8d-8b84-bd0ea8406d9a",
+   "metadata": {},
+   "source": [
+    "Compare this to the subsetting with no `min_var_coverage` threshold:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "id": "4774c83d-bbdc-48ac-aef2-d511cdd84e79",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>interval</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>chr1:999930-1000654</th>\n",
+       "      <td>chr1:999930-1000654</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>chr1:1001576-1002424</th>\n",
+       "      <td>chr1:1001576-1002424</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>chr1:1013015-1013931</th>\n",
+       "      <td>chr1:1013015-1013931</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>chr1:1019259-1020060</th>\n",
+       "      <td>chr1:1019259-1020060</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>chr1:1024711-1025625</th>\n",
+       "      <td>chr1:1024711-1025625</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "                                  interval\n",
+       "chr1:999930-1000654    chr1:999930-1000654\n",
+       "chr1:1001576-1002424  chr1:1001576-1002424\n",
+       "chr1:1013015-1013931  chr1:1013015-1013931\n",
+       "chr1:1019259-1020060  chr1:1019259-1020060\n",
+       "chr1:1024711-1025625  chr1:1024711-1025625"
+      ]
+     },
+     "execution_count": 15,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "ch.pp.filter_var_by_ranges(adata, f\"chr1:{1_000_000}-{1_100_000}\").var.loc[:,[\"interval\"]].head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "60471fd4-6d9c-427b-a297-b4edd9c7ae12",
+   "metadata": {},
+   "source": [
+    "Only a fraction of the first feature's range here is covered by the provided interval:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "id": "313a37d7-82fe-4d73-82cb-162e2145ec8e",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.9033149171270718"
+      ]
+     },
+     "execution_count": 16,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "(1_000_654 - 1_000_000) / (1_000_654 - 999_930)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "467cf5f6-9544-450e-894b-701025a2c173",
+   "metadata": {},
+   "source": [
+    "Providing `min_var_coverage` below this value, e.g. `90%` will keep this feature in the ouptut:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "id": "af166de0-0f0f-42e0-a8d7-e336cc3abbd3",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>interval</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>chr1:999930-1000654</th>\n",
+       "      <td>chr1:999930-1000654</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>chr1:1001576-1002424</th>\n",
+       "      <td>chr1:1001576-1002424</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>chr1:1013015-1013931</th>\n",
+       "      <td>chr1:1013015-1013931</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>chr1:1019259-1020060</th>\n",
+       "      <td>chr1:1019259-1020060</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>chr1:1024711-1025625</th>\n",
+       "      <td>chr1:1024711-1025625</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "                                  interval\n",
+       "chr1:999930-1000654    chr1:999930-1000654\n",
+       "chr1:1001576-1002424  chr1:1001576-1002424\n",
+       "chr1:1013015-1013931  chr1:1013015-1013931\n",
+       "chr1:1019259-1020060  chr1:1019259-1020060\n",
+       "chr1:1024711-1025625  chr1:1024711-1025625"
+      ]
+     },
+     "execution_count": 17,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "ch.pp.filter_var_by_ranges(adata, f\"chr1:{1_000_000}-{1_100_000}\", min_var_coverage=0.90).var.loc[:,[\"interval\"]].head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "ee90f951-c998-4180-866f-24e8b409277d",
+   "metadata": {},
+   "source": [
+    " "
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.15"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
