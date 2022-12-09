@@ -29,6 +29,7 @@ dependencies = [
     "scanpy",
     "pybedtools",
     "pysam",
+    "bioframe",
 ]
 
 [project.optional-dependencies]
