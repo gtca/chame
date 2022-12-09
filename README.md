@@ -16,7 +16,9 @@ pip install git+https://github.com/gtca/chame
 
 ## I/O
 
-10X Genomics ARC, SnapATAC, ArchR (arrow files).
+Raw data input: [10X Genomics ARC](https://gtca.github.io/chame/examples/10x_io.html), [ArchR (arrow files)](https://gtca.github.io/chame/examples/archr_io.html).
+
+Data model: [AnnData](https://github.com/scverse/anndata) and [MuData](https://github.com/scverse/mudata).
 
 ## Preprocessing and QC
 
@@ -24,11 +26,11 @@ TF-IDF / LSI. TSS enrichment, mono-nucleosome occupancy, etc.
 
 ## Methods
 
-Differential accessibility, transcription factor activity, etc.
+[Differential accessibility](https://gtca.github.io/chame/examples/chromvar.html), transcription factor activity, etc.
 
-## Plotting
+## Visualization
 
-Joint gene + peak visualisation.
+QC. Joint gene + peak visualisation.
 
 ---
 
