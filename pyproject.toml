@@ -1,79 +1,106 @@
 [build-system]
-build-backend = "flit_core.buildapi"
-requires = [
-    "flit_core >=3.4,<4",
-    "importlib_metadata>=0.7; python_version < '3.8'",
-]
-
+build-backend = "hatchling.build"
+requires = ["hatchling", "hatch-vcs"]
 
 [project]
 name = "chame"
 description = "Chromatin accessibility module"
+requires-python = ">= 3.10"
+license = "BSD-3-Clause"
 authors = [
-    {name = "Danila Bredikhin"},
-    {name = "Max Frank"},
+    { name = "Danila Bredikhin" },
 ]
 maintainers = [
-    {name = "Danila Bredikhin", email = "danila.bredikhin@embl.de"},
+    { name = "Danila Bredikhin", email = "danila@stanford.edu" },
 ]
-urls.Documentation = "https://gtca.github.io/chame"
-urls.Source = "https://github.com/gtca/chame"
-urls.Home-page = "https://github.com/gtca/chame"
-requires-python = ">=3.8"
-license = {file = "LICENSE"}
 readme = "README.md"
-dynamic = ["version"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Intended Audience :: Science/Research"
+]
 dependencies = [
     "anndata",
     "mudata",
     "scanpy",
-    "pybedtools",
     "pysam",
-    "bioframe",
+    "polars",
 ]
+dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://gtca.github.io/chame"
+Source = "https://github.com/gtca/chame"
+Home-page = "https://github.com/gtca/chame"
 
 [project.optional-dependencies]
 dev = [
-    # dev version generation
+    "setuptools_scm",
 ]
-doc = [
-    "sphinx==4.2",
-    "myst-parser",
+docs = [
+    "sphinx",
     "sphinx-book-theme",
+    "pydata-sphinx-theme",
     "readthedocs-sphinx-search",
     "nbsphinx",
-    "sphinx-automodapi",
-    "sphinxcontrib-bibtex",
-    "sphinx-autodoc-typehints",
-    "sphinx-markdown-tables",
+    "sphinx_automodapi",
+    "recommonmark"
 ]
 test = [
     "pytest",
-    "pytest-cov",
-]
-
-[tool.coverage.run]
-source = ["chame"]
-omit = [
-    "**/test_*.py",
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-xfail_strict = true
-addopts = [
-    #'-Werror',  # if 3rd party libs raise DeprecationWarnings, just use filterwarnings below
-    '--import-mode=importlib',  # allow using test files with same name
-]
-filterwarnings = [
-    #'ignore:.*U.*mode is deprecated:DeprecationWarning',
+python_files = "test_*.py"
+testpaths = [
+    "./tests", # unit tests
 ]
 
-[tool.isort]
-multi_line_output = 3
-profile = "black"
-skip = []
+[tool.black]
+line-length = 100
+target-version = ['py39']
 
-[tool.jupytext]
-formats = "ipynb,md"
+[tool.hatch.version]
+source = "vcs"
 
+[tool.hatch.build.hooks.vcs]
+version-file = "src/chame/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chame"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/.github",
+  "/docs",
+]
+
+[tool.ruff]
+src = ["src"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
+    "E",   # Error detected by Pycodestyle
+    "F",   # Errors detected by Pyflakes
+    "W",   # Warning detected by Pycodestyle
+    "UP",  # pyupgrade
+    "I",   # isort
+    "TCH", # manage type checking blocks
+    "ICN", # Follow import conventions
+    "PTH", # Pathlib instead of os.path
+    "PT",  # Pytest conventions
+]
+ignore = [
+    # line too long -> we accept long comment lines; formatter gets rid of long code lines
+    "E501",
+    # Do not assign a lambda expression, use a def -> AnnData allows lambda expression assignments,
+    "E731",
+    # allow I, O, l as variable names -> I is the identity matrix, i, j, k, l is reasonable indexing notation
+    "E741",
+]

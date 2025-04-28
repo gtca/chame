@@ -7,21 +7,20 @@
 #   https://github.com/GreenleafLab/chromVAR
 #
 
-from typing import Dict, Literal, List, Union
-
-import numpy as np
-from scipy.sparse import csr_matrix, lil_matrix
-import scipy.stats as stats
-from sklearn.neighbors import NearestNeighbors
-from anndata import AnnData
 
 from logging import log
+
+import numpy as np
+import scipy.stats as stats
+from anndata import AnnData
+from scipy.sparse import csr_matrix, lil_matrix
+from sklearn.neighbors import NearestNeighbors
 
 
 def chromvar(
     adata: AnnData,
     annotations,
-    bias: Union[str, List[str], np.ndarray] = "gc",
+    bias: str | list[str] | np.ndarray = "gc",
     background_peaks=None,
     expectation=None,
     dev_key: str = "deviations",
@@ -35,7 +34,7 @@ def chromvar(
     counts = adata.X
 
     if bias is None:
-        log.info(f"Using counts per peak as bias as none provided.")
+        log.info("Using counts per peak as bias as none provided.")
         bias = counts.sum(axis=0)
 
     if background_peaks is None:
@@ -43,7 +42,7 @@ def chromvar(
             try:
                 bias = adata.var[bias]
             except KeyError:
-                raise KeyError(f"Calculate GC bias per peak with chame.util.seq.count_gc "
+                raise KeyError("Calculate GC bias per peak with chame.util.seq.count_gc "
                                "or provide it as an array")
         background_peaks = _get_background_peaks(counts, bias)
 
@@ -71,7 +70,7 @@ def _compute_deviations_core(
     background_peaks,
     expectation,
     threshold=1,
-) -> Dict[str, np.ndarray]:
+) -> dict[str, np.ndarray]:
     assert all(
         counts.sum(axis=0) > 0
     ), "There should be at least one count for each peak"

@@ -1,9 +1,9 @@
-from typing import Mapping, Union
+from collections.abc import Mapping
 
 import numpy as np
 
 
-def count_gc(sequence: Union[str, np.ndarray]) -> float:
+def count_gc(sequence: str | np.ndarray) -> float:
     """
     Counts the frequency of capital G and C letters
     in a given string or array of strings.

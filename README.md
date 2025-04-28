@@ -37,8 +37,8 @@ QC. Joint gene + peak visualisation.
 # Other projects
 
 1. [muon](https://github.com/scverse/muon)
-1. [episcanpy](https://github.com/colomemaria/epiScanpy)
 1. [SnapATAC2](https://github.com/kaizhang/SnapATAC2)
+1. [episcanpy](https://github.com/colomemaria/epiScanpy)
 1. [ArchR](https://www.archrproject.com/)
 1. [Signac](https://satijalab.org/signac/)
 

@@ -4,7 +4,7 @@ from anndata import AnnData
 import chame as ch
 
 def setup_anndata_with_ranges(col: str = "interval", n_obs: int = 50, n_vars: int = 100) -> AnnData:
-    adata = AnnData(default_rng(42).integers(10, size=(n_obs, n_vars)), dtype=int)
+    adata = AnnData(default_rng(42).integers(10, size=(n_obs, n_vars)))
     chromosomes = default_rng(42).choice(n_vars, size=n_vars, replace=False) + 1
     starts = default_rng(42).choice(1_000_000, size=n_vars, replace=False) + 10
     sizes = default_rng(42).choice(100_000, size=n_vars, replace=False) + 100
