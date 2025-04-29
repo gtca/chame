@@ -10,7 +10,7 @@ from mudata import MuData
 from scipy.stats import gaussian_kde
 
 from .. import tools
-from ..utils import get_fragment_key
+from ..utils import _get_fragment_key
 
 
 def tss_enrichment(
@@ -184,16 +184,16 @@ def qc_scatter(
 ):
     """
     Plot the number of unique fragments (log10) vs TSS enrichment score.
-
+    
     Parameters
     ----------
     data
         AnnData object with peak counts or multimodal MuData object with 'atac' or 'peaks' modality.
     region
-        Region or list of regions to count fragments in, in the format 'chr1' (entire chromosome)
+        Region or list of regions to count fragments in, in the format 'chr1' (entire chromosome) 
         or 'chr1:1-100000' or 'chr1-1-100000'. If None, count fragments in the entire genome.
     in_peaks
-        Whether to count only fragments that overlap with peaks.
+        Whether to count only fragments that overlap with peaks. 
         Requires var_names in adata to be in format 'chr:start-end'.
     peaks_only
         If True, only plot cells that have fragments in peaks. Only relevant when in_peaks=True.
@@ -222,7 +222,7 @@ def qc_scatter(
         If True, count each fragment only once per cell. If False, count fragments
         according to the score field in the fragments file (number of read pairs).
     cut_sites
-        If True, count individual cut sites instead of fragments. Each fragment has
+        If True, count individual cut sites instead of fragments. Each fragment has 
         two cut sites (5' and 3' ends).
     verbose
         Whether to show progress bars when computing fragment counts.
@@ -231,7 +231,7 @@ def qc_scatter(
         If None, construct a key based on the parameters.
     **kwargs
         Additional arguments passed to plt.scatter.
-
+    
     Returns
     -------
     Axes
@@ -256,7 +256,7 @@ def qc_scatter(
 
     # Construct the fragment key if not provided
     if fragment_key is None:
-        fragment_key = get_fragment_key(unique, cut_sites, in_peaks, region)
+        fragment_key = _get_fragment_key(unique, cut_sites, in_peaks, region)
 
     # Check if fragment counts need to be computed
     if fragment_key not in adata.obs.columns:

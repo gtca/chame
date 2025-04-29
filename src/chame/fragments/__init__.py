@@ -1,4 +1,4 @@
-from . import plot as pl
+from . import pl as pl
 from . import preproc as pp
 from . import tools as tl
 
