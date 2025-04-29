@@ -171,7 +171,7 @@ def create_simple_histograms(df, keys, bins, kde=False, bandwidth: float | None 
 
         # Filter data for this key
         chart_data = alt.Chart(df).transform_filter(
-            alt.datum[key] is not None  # Filter out None/NaN values
+            alt.datum[key] != None  # Filter out None/NaN values
         )
 
         # Create histogram
