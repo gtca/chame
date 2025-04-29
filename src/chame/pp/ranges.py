@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import TypeVar
 
 import numpy as np
@@ -10,18 +11,18 @@ from mudata import MuData
 
 T = TypeVar("T", AnnData, MuData)
 
-__all__ = ["filter_var_by_ranges"]
+__all__ = ["filter_var_by_region"]
 
 
-def _select(df, region, cols=None):
+def _select(df, region, cols=None, to_pandas: bool = True):
     """Select rows from dataframe that overlap with a genomic region."""
     if cols is None:
         cols = ["chrom", "start", "end"]
 
     if isinstance(region, str):
         # Parse "chr1:100-200" format
-        chrom, positions = region.split(":")
-        start, end = map(int, positions.split("-"))
+        chrom, start, end = re.split("-|:", region)
+        start, end = int(start.replace(',', '')), int(end.replace(',', ''))
     elif isinstance(region, tuple) and len(region) == 3:
         chrom, start, end = region
         start, end = int(start), int(end)
@@ -29,7 +30,7 @@ def _select(df, region, cols=None):
         raise ValueError("Region must be a string in format 'chr:start-end' or a tuple (chr, start, end)")
 
     # Convert pandas DataFrame to polars
-    if isinstance(df, pd.DataFrame):
+    if not isinstance(df, pl.DataFrame):
         df_pl = pl.DataFrame(df)
     else:
         df_pl = df
@@ -37,18 +38,20 @@ def _select(df, region, cols=None):
     # Filter rows
     result = df_pl.filter(
         (pl.col(cols[0]) == chrom) &
-        (pl.col(cols[1]) < int(end)) &
-        (pl.col(cols[2]) > int(start))
+        (pl.col(cols[1]) < end) &
+        (pl.col(cols[2]) > start)
     )
 
     # Convert back to pandas for compatibility
-    return result.to_pandas()
+    if to_pandas:
+        return result.to_pandas()
+    return result
 
 
-def _overlap(df1, df2, cols1=None, cols2=None, how="inner"):
+def _overlap(df1, df2, cols1=None, cols2=None, how="inner", to_pandas: bool = True):
     """Find overlapping regions between two dataframes."""
     if cols1 is None:
-        cols1 = ["chrom", "start", "end"]
+        cols1 = ("chrom", "start", "end")
     if cols2 is None:
         cols2 = cols1
 
@@ -94,10 +97,12 @@ def _overlap(df1, df2, cols1=None, cols2=None, how="inner"):
     })
 
     # Convert back to pandas for compatibility
-    return result.to_pandas()
+    if to_pandas:
+        return result.to_pandas()
+    return result
 
 
-def _coverage(df1, df2, cols1=None, cols2=None):
+def _coverage(df1, df2, cols1=None, cols2=None, to_pandas: bool = True):
     """Calculate coverage of regions in df1 by regions in df2."""
     if cols1 is None:
         cols1 = ["chrom", "start", "end"]
@@ -105,12 +110,12 @@ def _coverage(df1, df2, cols1=None, cols2=None):
         cols2 = cols1
 
     # Convert pandas DataFrames to polars
-    if isinstance(df1, pd.DataFrame):
+    if not isinstance(df1, pl.DataFrame):
         df1_pl = pl.DataFrame(df1)
     else:
         df1_pl = df1
 
-    if isinstance(df2, pd.DataFrame):
+    if not isinstance(df2, pl.DataFrame):
         df2_pl = pl.DataFrame(df2)
     else:
         df2_pl = df2
@@ -160,13 +165,15 @@ def _coverage(df1, df2, cols1=None, cols2=None):
     })
 
     # Convert back to pandas for compatibility
-    return result.to_pandas()
+    if to_pandas:
+        return result.to_pandas()
+    return result
 
 
-def filter_var_by_ranges(
+def filter_var_by_region(
     data: T,
-    ranges: str | list[str] | np.ndarray | pd.DataFrame,
-    ranges_columns: str | tuple[str, str, str] = "interval",
+    region: str | list[str] | np.ndarray | pd.DataFrame,
+    region_columns: str | tuple[str, str, str] = ("chrom", "start", "end"),
     min_var_coverage: float | None = None,
 ) -> T:
     """
@@ -176,29 +183,35 @@ def filter_var_by_ranges(
     ----------
     data
         AnnData object or MuData object with ranges information stored in .var
-        as an interval column ("chr1:100-200") or 
+        as an interval column ("chr1:100-200") or
         as three columns (chrom, start, end).
-    ranges
+    region
         String ("chr1:100-200") or a tuple ("chr1", "100", 200") for a single range,
-        list or numpy array of strings or pandas data frame with respective columns 
+        list or numpy array of strings or pandas data frame with respective columns
         for multiple intervals.
-    ranges_columns
+    region_columns
         A single column for an interval, "interval" by default.
         Alternatively, a tuple with chromosome, start and end columns,
         ("chrom", "start", "end") by default.
-    var_overlap
+        Use None to use the index as the interval.
+    min_var_coverage
         Only count ranges overlaps greater than or equal to min_var_coverage
         as a fraction of the .var range covered by the ranges in `ranges`.
         Use `min_var_coverage = 1.0` to subset features fully enclosed in `ranges`.
     """
-    if ranges_columns is str and ranges_columns not in data.var:
-        raise KeyError(f"Ranges column {ranges_columns} was not found in .var")
-    elif isinstance(ranges_columns, tuple):
-        if len(ranges_columns) != 3:
+    if region_columns is str and region_columns not in data.var:
+        raise KeyError(f"Ranges column {region_columns} was not found in .var")
+    elif isinstance(region_columns, tuple):
+        if len(region_columns) != 3:
             raise ValueError(
                 "chromosome, start and end columns should be defined "
-                f"but only {len(ranges_columns)} names were provided"
+                f"but only {len(region_columns)} names were provided"
             )
+        data_var_ranges_cols = data.var.loc[:, region_columns]
+    elif region_columns is None:
+        data_var_ranges_cols = data.var.index
+    else:
+        raise ValueError(f"Invalid region_columns: {str(region_columns)}")
 
     if min_var_coverage is not None and min_var_coverage is not False:
         if min_var_coverage > 1 or min_var_coverage < 0:
@@ -210,11 +223,11 @@ def filter_var_by_ranges(
     default_ranges_cols = ["chrom", "start", "end"]
     var_ids = "var_indices"
 
-    if isinstance(ranges_columns, str):
-        convertible = data.var[ranges_columns].values != "NA"
+    if isinstance(region_columns, str):
+        convertible = data_var_ranges_cols.values != "NA"
         cols = default_ranges_cols
         var = pd.DataFrame.from_records(
-            data.var.loc[:, ranges_columns].str.split("-|:").to_list(),
+            data_var_ranges_cols.str.split("-|:").to_list(),
             columns=cols,
         )
         var[var_ids] = np.arange(len(var))
@@ -222,44 +235,44 @@ def filter_var_by_ranges(
         var[cols[1]] = var[cols[1]].astype(int)
         var[cols[2]] = var[cols[2]].astype(int)
     else:
-        var = data.var.loc[:, ranges_columns]
+        var = data_var_ranges_cols
         var[var_ids] = np.arange(len(var))
-        cols = ranges_columns
+        cols = region_columns
 
-    if isinstance(ranges, str) or (
-                isinstance(ranges, tuple) and len(ranges) == 3
+    if isinstance(region, str) or (
+                isinstance(region, tuple) and len(region) == 3
             ):
         if min_var_coverage is not None and min_var_coverage is not False:
-            ranges_df = pd.DataFrame.from_records(
-                pd.Series(ranges).str.split("-|:"),
+            region_df = pd.DataFrame.from_records(
+                pd.Series(region).str.split("-|:"),
                 columns=cols,
             )
-            ranges_df[cols[1]] = ranges_df[cols[1]].astype(int)
-            ranges_df[cols[2]] = ranges_df[cols[2]].astype(int)
+            region_df[cols[1]] = region_df[cols[1]].astype(int)
+            region_df[cols[2]] = region_df[cols[2]].astype(int)
 
-            cov = _coverage(var, ranges_df, cols1=cols, cols2=cols)
+            cov = _coverage(var, region_df, cols1=cols, cols2=cols)
             cov_sel = cov["coverage"] / (cov[cols[2]] - cov[cols[1]]) >= min_var_coverage
             index = cov.loc[cov_sel,:][var_ids].values
 
         else:
-            index = _select(var, ranges, cols=cols)[var_ids].values
+            index = _select(var, region, cols=cols)[var_ids].values
     else:
-        if isinstance(ranges, np.ndarray) or isinstance(ranges, list):
-            ranges_df = pd.DataFrame.from_records(
-                pd.Series(ranges).str.split("-|:"),
+        if isinstance(region, np.ndarray) or isinstance(region, list):
+            region_df = pd.DataFrame.from_records(
+                pd.Series(region).str.split("-|:"),
                 columns=cols,
             )
-            ranges_df[cols[1]] = ranges_df[cols[1]].astype(int)
-            ranges_df[cols[2]] = ranges_df[cols[2]].astype(int)
+            region_df[cols[1]] = region_df[cols[1]].astype(int)
+            region_df[cols[2]] = region_df[cols[2]].astype(int)
         else:
-            ranges_df = ranges
+            region_df = region
         if min_var_coverage is not None and min_var_coverage is not False:
-            cov = _coverage(var, ranges_df, cols1=cols, cols2=cols)
+            cov = _coverage(var, region_df, cols1=cols, cols2=cols)
             cov_sel = cov["coverage"] / (cov["end"] - cov["start"]) >= min_var_coverage
             index = cov.loc[cov_sel,:][var_ids].values
         else:
             index = _overlap(
-                var, ranges_df, cols1=cols, cols2=cols, how="inner"
+                var, region_df, cols1=cols, cols2=cols, how="inner"
             )[var_ids].values
 
     return data[:, index]
