@@ -4,48 +4,6 @@ from collections.abc import Sequence
 import polars as pl
 
 
-def parse_region_string(region: str) -> pl.DataFrame:
-    chrom_start_end = re.split("-|:", region)
-    feature_df = pl.DataFrame({"chrom": [chrom_start_end[0]], "start": [chrom_start_end[1]], "end": [chrom_start_end[2]]})
-    feature_df = feature_df.with_columns(
-        pl.col("start").cast(pl.Int64),
-        pl.col("end").cast(pl.Int64)
-    )
-
-    return feature_df
-
-def parse_region_strings(regions: Sequence[str] | tuple[str]) -> pl.DataFrame:
-    """
-    Parse multiple region strings into a single DataFrame.
-
-    Parameters
-    ----------
-    regions
-        List or tuple of region strings in format `['chr1:1-2000000', ...]` or `['chr1-1-2000000', ...]`
-
-    Returns
-    -------
-    pl.DataFrame
-        DataFrame with columns: chrom, start, end
-    """
-    chroms = []
-    starts = []
-    ends = []
-
-    for region in regions:
-        chrom_start_end = re.split("-|:", region)
-        chroms.append(chrom_start_end[0])
-        starts.append(chrom_start_end[1])
-        ends.append(chrom_start_end[2])
-
-    feature_df = pl.DataFrame({"chrom": chroms, "start": starts, "end": ends})
-    feature_df = feature_df.with_columns(
-        pl.col("start").cast(pl.Int64),
-        pl.col("end").cast(pl.Int64)
-    )
-
-    return feature_df
-
 def _get_fragment_key(
     unique: bool = True,
     cut_sites: bool = False,
